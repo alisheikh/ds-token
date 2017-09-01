@@ -17,6 +17,8 @@ import "./base.sol";
 
 contract DSToken is DSTokenBase(0), DSStop {
 
+    mapping (address => mapping (address => bool)) _trusted;
+
     bytes32  public  symbol;
     uint256  public  decimals = 18; // standard token precision. override to customize
 
@@ -24,16 +26,37 @@ contract DSToken is DSTokenBase(0), DSStop {
         symbol = symbol_;
     }
 
+    function trusted(address src, address dst) returns (bool) {
+        return _trusted[src][dst];
+    }
+
     function transfer(address dst, uint wad) stoppable note returns (bool) {
         return super.transfer(dst, wad);
     }
-    function transferFrom(
-        address src, address dst, uint wad
-    ) stoppable note returns (bool) {
-        return super.transferFrom(src, dst, wad);
+    function transferFrom(address src, address dst, uint wad)
+        stoppable
+        note
+        returns (bool)
+    {
+        assert(_balances[src] >= wad);
+
+        if (!_trusted[src][msg.sender]) {
+            assert(_approvals[src][msg.sender] >= wad);
+            _approvals[src][msg.sender] = sub(_approvals[src][msg.sender], wad);
+        }
+
+        _balances[src] = sub(_balances[src], wad);
+        _balances[dst] = add(_balances[dst], wad);
+
+        Transfer(src, dst, wad);
+
+        return true;
     }
     function approve(address guy, uint wad) stoppable note returns (bool) {
         return super.approve(guy, wad);
+    }
+    function trust(address guy, bool wat) {
+        _trusted[msg.sender][guy] = wat;
     }
 
     function push(address dst, uint128 wad) returns (bool) {
@@ -55,7 +78,7 @@ contract DSToken is DSTokenBase(0), DSStop {
     // Optional token name
 
     bytes32   public  name = "";
-    
+
     function setName(bytes32 name_) auth {
         name = name_;
     }

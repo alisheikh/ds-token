@@ -161,5 +161,21 @@ contract DSTokenTest is DSTest {
         user1.doSetName("Test");
     }
 
+    function testFailUntrustedTransferFrom() {
+        assert(!token.trusted(this, user2));
+        user1.doTransferFrom(this, user2, 200);
+    }
+    function testTrusting() {
+        assert(!token.trusted(this, user2));
+        token.trust(user2, true);
+        assert(token.trusted(this, user2));
+        token.trust(user2, false);
+        assert(!token.trusted(this, user2));
+    }
+    function testTrustedTransferFrom() {
+        token.trust(user1, true);
+        user1.doTransferFrom(this, user2, 200);
+        assertEq(token.balanceOf(user2), 200);
+    }
 }
 
