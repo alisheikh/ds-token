@@ -26,6 +26,8 @@ contract DSToken is DSTokenBase(0), DSStop {
         symbol = symbol_;
     }
 
+    event Trust(address indexed src, address indexed guy, bool wat);
+
     function trusted(address src, address dst) returns (bool) {
         return _trusted[src][dst];
     }
@@ -57,6 +59,7 @@ contract DSToken is DSTokenBase(0), DSStop {
     }
     function trust(address guy, bool wat) {
         _trusted[msg.sender][guy] = wat;
+        Trust(msg.sender, guy, wat);
     }
 
     function push(address dst, uint128 wad) returns (bool) {
